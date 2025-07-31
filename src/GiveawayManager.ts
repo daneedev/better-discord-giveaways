@@ -63,6 +63,23 @@ class GiveawayManager {
         }
 
         const winners = this.pickWinners(entries, giveaway.winnerCount)
+        const mention = winners.length ? winners.map(id => `<@${id}>`).join(", ") : "No winners"
+
+        const endEmbed = new EmbedBuilder()
+            .setTitle(`🎉 Giveaway ended - ${giveaway.prize}`)
+            .setDescription(`Winner(s): ${mention}`)
+            .setColor("DarkRed")
+
+        await message.edit({ embeds: [endEmbed] })
+
+        giveaway.ended = true
+        await this.adapter.save(giveaway)
+    }
+
+    public async reroll(giveawayId: string) : Promise<void> {
+        const giveaway = await this.adapter.get(giveawayId)
+        if (!giveaway || giveaway.ended) return
+        return this.end(giveawayId)
     }
 
     private generateId() : string {
