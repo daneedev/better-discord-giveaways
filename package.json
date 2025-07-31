@@ -1,0 +1,26 @@
+{
+  "name": "better-discord-giveaways",
+  "version": "1.0.0",
+  "description": "An better version of existing discord-giveaways npm package",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daneedev/better-discord-giveaways.git"
+  },
+  "author": "Danee",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/daneedev/better-discord-giveaways/issues"
+  },
+  "homepage": "https://github.com/daneedev/better-discord-giveaways#readme",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0"
+  }
+}
