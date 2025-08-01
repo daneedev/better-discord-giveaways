@@ -7,12 +7,16 @@ class GiveawayManager {
     private reaction: string;
     private botsCanWin: boolean;
     private adapter: BaseAdapter;
+    private sweepInterval: NodeJS.Timeout | null = null;
     
     constructor(client: Client, adapter: BaseAdapter, options: GiveawayManagerOptions) {
         this.client = client;
         this.adapter = adapter;
         this.reaction = options.reaction;
         this.botsCanWin = options.botsCanWin;
+        if (options.autoSweep !== false) {
+            this.startSweepLoop(options.sweepIntervalMs)
+        }
     }
     
     public async start(options: GiveawayOptions) : Promise<GiveawayData> {
@@ -91,9 +95,19 @@ class GiveawayManager {
         return shuffled.slice(0, count)
     }
 
-    private scheduleEnd(giveaway: GiveawayData) {
-        const timeLef = giveaway.endAt - Date.now()
-        // TODO: Make the scheduling system
+    public startSweepLoop(intervalMs = 10000) : void {
+        if (this.sweepInterval) clearInterval(this.sweepInterval)
+
+        this.sweepInterval = setInterval(async () => {
+            const now = Date.now()
+            const giveaways = await this.adapter.getAll()
+
+            for (const giveaway of giveaways) {
+                if (!giveaway.ended && giveaway.endAt <= now) {
+                    await this.end(giveaway.giveawayId)
+                }
+            }
+        }, intervalMs)
     }
 }
 
