@@ -14,8 +14,11 @@ class GiveawayManager {
         this.adapter = adapter;
         this.reaction = options.reaction;
         this.botsCanWin = options.botsCanWin;
-        if (options.autoSweep !== false) {
-            this.startSweepLoop(options.sweepIntervalMs)
+
+        const autoSweep = options?.autoSweep ?? true;
+        const sweepIntervalMs = options?.sweepIntervalMs ?? 10000; 
+        if (autoSweep !== false) {
+            this.startSweepLoop(sweepIntervalMs)
         }
     }
     
