@@ -20,3 +20,10 @@ export interface GiveawayManagerOptions {
     reaction: string;
     botsCanWin: boolean;
 }
+
+export type GiveawayEvents = {
+    giveawayStarted: (giveaway: GiveawayData) => void;
+    giveawayEnded: (giveaway: GiveawayData, winners: string[]) => void;
+    giveawayRerolled: (giveaway: GiveawayData, winners: string[]) => void;
+    giveawayEdited: (giveaway: GiveawayData, updated: GiveawayData) => void;
+}

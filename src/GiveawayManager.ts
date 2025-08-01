@@ -1,19 +1,22 @@
 import { Client, EmbedBuilder, TextChannel } from "discord.js"
 import { GiveawayData, GiveawayManagerOptions, GiveawayOptions } from "./types";
 import { BaseAdapter } from "./storage/BaseAdapter";
+import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
 
-class GiveawayManager {
+class GiveawayManager  {
     private client: Client;
     private reaction: string;
     private botsCanWin: boolean;
     private adapter: BaseAdapter;
     private timeouts: Map<string, NodeJS.Timeout> = new Map()
+    public readonly events: GiveawayEventEmitter
     
     constructor(client: Client, adapter: BaseAdapter, options: GiveawayManagerOptions) {
         this.client = client;
         this.adapter = adapter;
         this.reaction = options.reaction;
         this.botsCanWin = options.botsCanWin;
+        this.events = new GiveawayEventEmitter();
 
         this.restoreTimeouts()
     }
@@ -47,10 +50,11 @@ class GiveawayManager {
         await this.adapter.save(giveaway)
 
         this.setTimeoutForGiveaway(giveaway)
+        this.events.emit("giveawayStarted", giveaway);
         return giveaway;
     }
 
-    public async end(giveawayId: string) : Promise<void> {
+    public async end(giveawayId: string, rerolled: boolean) : Promise<void> {
         const giveaway = await this.adapter.get(giveawayId)
         if (!giveaway || giveaway.ended) return
 
@@ -78,7 +82,11 @@ class GiveawayManager {
 
         giveaway.ended = true
         this.clearTimeoutForGiveaway(giveawayId)
-
+        if (!rerolled) {
+            this.events.emit("giveawayEnded", giveaway, winners);
+        } else {
+            this.events.emit("giveawayRerolled", giveaway, winners);
+        }
         await this.adapter.save(giveaway)
     }
 
@@ -109,7 +117,15 @@ class GiveawayManager {
             endAt: giveaway.endAt,
             ended: false
         })
-
+        this.events.emit("giveawayEdited", giveaway, {
+            giveawayId: giveaway.giveawayId,
+            channelId: giveaway.channelId,
+            messageId: giveaway.messageId,
+            prize: options.prize,
+            winnerCount: options.winnerCount,
+            endAt: giveaway.endAt,
+            ended: false
+        })
     }
 
     public async restoreTimeouts() {
@@ -124,7 +140,7 @@ class GiveawayManager {
     public async reroll(giveawayId: string) : Promise<void> {
         const giveaway = await this.adapter.get(giveawayId)
         if (!giveaway || giveaway.ended) return
-        return this.end(giveawayId)
+        return this.end(giveawayId, true)
     }
 
     private generateId() : string {
@@ -139,12 +155,12 @@ class GiveawayManager {
     private setTimeoutForGiveaway(giveaway: GiveawayData) {
         const msUntilEnd = giveaway.endAt - Date.now()
         if (msUntilEnd <= 0) {
-            this.end(giveaway.giveawayId)
+            this.end(giveaway.giveawayId, false)
             return
         }
 
         const timeout = setTimeout(() => {
-            this.end(giveaway.giveawayId)
+            this.end(giveaway.giveawayId, false)
         }, msUntilEnd)
 
         this.timeouts.set(giveaway.giveawayId, timeout)
