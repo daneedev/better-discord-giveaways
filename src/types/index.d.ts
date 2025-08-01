@@ -17,8 +17,6 @@ export interface GiveawayOptions {
 }
 
 export interface GiveawayManagerOptions {
-    autoSweep?: boolean;
-    sweepIntervalMs?: number;
     reaction: string;
     botsCanWin: boolean;
 }

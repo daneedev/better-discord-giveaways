@@ -7,7 +7,7 @@ class GiveawayManager {
     private reaction: string;
     private botsCanWin: boolean;
     private adapter: BaseAdapter;
-    private sweepInterval: NodeJS.Timeout | null = null;
+    private timeouts: Map<string, NodeJS.Timeout> = new Map()
     
     constructor(client: Client, adapter: BaseAdapter, options: GiveawayManagerOptions) {
         this.client = client;
@@ -15,11 +15,7 @@ class GiveawayManager {
         this.reaction = options.reaction;
         this.botsCanWin = options.botsCanWin;
 
-        const autoSweep = options?.autoSweep ?? true;
-        const sweepIntervalMs = options?.sweepIntervalMs ?? 10000; 
-        if (autoSweep !== false) {
-            this.startSweepLoop(sweepIntervalMs)
-        }
+        this.restoreTimeouts()
     }
     
     public async start(options: GiveawayOptions) : Promise<GiveawayData> {
@@ -50,6 +46,7 @@ class GiveawayManager {
         giveaway.messageId = message.id
         await this.adapter.save(giveaway)
 
+        this.setTimeoutForGiveaway(giveaway)
         return giveaway;
     }
 
@@ -74,12 +71,14 @@ class GiveawayManager {
 
         const endEmbed = new EmbedBuilder()
             .setTitle(`🎉 Giveaway ended - ${giveaway.prize}`)
-            .setDescription(`Winner(s): ${mention}`)
+            .setDescription(`Winner(s): ${mention}\nEnded <t:${Math.floor(giveaway.endAt / 1000)}:R>`)
             .setColor("DarkRed")
 
         await message.edit({ embeds: [endEmbed] })
 
         giveaway.ended = true
+        this.clearTimeoutForGiveaway(giveawayId)
+
         await this.adapter.save(giveaway)
     }
 
@@ -98,19 +97,35 @@ class GiveawayManager {
         return shuffled.slice(0, count)
     }
 
-    public startSweepLoop(intervalMs = 10000) : void {
-        if (this.sweepInterval) clearInterval(this.sweepInterval)
+    private setTimeoutForGiveaway(giveaway: GiveawayData) {
+        const msUntilEnd = giveaway.endAt - Date.now()
+        if (msUntilEnd <= 0) {
+            this.end(giveaway.giveawayId)
+            return
+        }
 
-        this.sweepInterval = setInterval(async () => {
-            const now = Date.now()
-            const giveaways = await this.adapter.getAll()
+        const timeout = setTimeout(() => {
+            this.end(giveaway.giveawayId)
+        }, msUntilEnd)
 
-            for (const giveaway of giveaways) {
-                if (!giveaway.ended && giveaway.endAt <= now) {
-                    await this.end(giveaway.giveawayId)
-                }
+        this.timeouts.set(giveaway.giveawayId, timeout)
+    }
+
+    public async restoreTimeouts() {
+        const giveaways = await this.adapter.getAll()
+        for (const giveaway of giveaways) {
+            if (!giveaway.ended) {
+                this.setTimeoutForGiveaway(giveaway)
             }
-        }, intervalMs)
+        }
+    }
+
+    private clearTimeoutForGiveaway(giveawayId: string) {
+        const timeout = this.timeouts.get(giveawayId)
+        if (timeout) {
+            clearTimeout(timeout)
+            this.timeouts.delete(giveawayId)
+        }
     }
 }
 
