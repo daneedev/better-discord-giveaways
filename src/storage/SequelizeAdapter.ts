@@ -10,7 +10,7 @@ export class SequelizeAdapter implements BaseAdapter {
         this.model = initGiveawayModel(sequelize)
     }
 
-    async save(data: GiveawayData): Promise<void> {
+    public async save(data: GiveawayData): Promise<void> {
         await this.model.upsert({ 
             giveawayId: data.giveawayId,
             messageId: data.messageId,
@@ -22,18 +22,24 @@ export class SequelizeAdapter implements BaseAdapter {
         })
     }
 
-    async get(id: string): Promise<GiveawayData | null> {
+    public async get(id: string): Promise<GiveawayData | null> {
         const record = await this.model.findByPk(id)
         if (!record) return null
         return record
     }
 
-    async getAll(): Promise<GiveawayData[]> {
+    public async getAll(): Promise<GiveawayData[]> {
         const records = await this.model.findAll()
         return records
     }
 
-    async delete(id: string): Promise<void> {
+    public async delete(id: string): Promise<void> {
         await this.model.destroy({ where: {giveawayId: id}})
+    }
+
+    public async edit(id: string, data: GiveawayData): Promise<void> {
+        await this.model.update(data, { where: {
+            giveawayId: id
+        }})
     }
  }

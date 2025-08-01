@@ -55,4 +55,10 @@ export class JSONAdapter implements BaseAdapter {
         return [...this.cache]
     }
 
+    public async edit(id: string, data: GiveawayData): Promise<void> {
+        await this.load()
+        await this.delete(id)
+        await this.save(data)
+    }
+
 }

@@ -37,7 +37,7 @@ class GiveawayManager {
 
         const embed = new EmbedBuilder()
             .setTitle(`🎉 Giveaway - ${options.prize}`)
-            .setDescription(`React with 🎉 to enter!\nEnds <t:${Math.floor(endAt / 1000)}:R>`)
+            .setDescription(`React with ${this.reaction} to enter!\nEnds <t:${Math.floor(endAt / 1000)}:R>`)
             .setColor("Red")
 
         const message = await (channel as TextChannel).send({ embeds: [embed]})
@@ -82,6 +82,45 @@ class GiveawayManager {
         await this.adapter.save(giveaway)
     }
 
+    public async edit(giveawayId: string, options: GiveawayOptions) : Promise<void> {
+        const giveaway = await this.adapter.get(giveawayId)
+        if (!giveaway || giveaway.ended) {
+            throw new Error("No giveaway found or already ended!")
+        }
+
+        const channel = await this.client.channels.fetch(giveaway.channelId)
+        if (!channel || !channel.isTextBased()) return
+
+
+        const message = await (channel as TextChannel).messages.fetch(giveaway.messageId!)
+        const embed = new EmbedBuilder()
+            .setTitle(`🎉 Giveaway - ${options.prize}`)
+            .setDescription(`React with ${this.reaction} to enter!\nEnds <t:${Math.floor(giveaway.endAt / 1000)}:R>`)
+            .setColor("Red")
+
+        await message.edit({ embeds: [embed]})
+
+        await this.adapter.edit(giveawayId, {
+            giveawayId: giveaway.giveawayId,
+            channelId: giveaway.channelId,
+            messageId: giveaway.messageId,
+            prize: options.prize,
+            winnerCount: options.winnerCount,
+            endAt: giveaway.endAt,
+            ended: false
+        })
+
+    }
+
+    public async restoreTimeouts() {
+        const giveaways = await this.adapter.getAll()
+        for (const giveaway of giveaways) {
+            if (!giveaway.ended) {
+                this.setTimeoutForGiveaway(giveaway)
+            }
+        }
+    }
+
     public async reroll(giveawayId: string) : Promise<void> {
         const giveaway = await this.adapter.get(giveawayId)
         if (!giveaway || giveaway.ended) return
@@ -109,15 +148,6 @@ class GiveawayManager {
         }, msUntilEnd)
 
         this.timeouts.set(giveaway.giveawayId, timeout)
-    }
-
-    public async restoreTimeouts() {
-        const giveaways = await this.adapter.getAll()
-        for (const giveaway of giveaways) {
-            if (!giveaway.ended) {
-                this.setTimeoutForGiveaway(giveaway)
-            }
-        }
     }
 
     private clearTimeoutForGiveaway(giveawayId: string) {
