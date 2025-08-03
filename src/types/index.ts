@@ -14,6 +14,7 @@ export interface GiveawayOptions {
     prize: string;
     winnerCount: number;
     duration: number;
+    requirements?: GiveawayRequirements;
 }
 
 export interface GiveawayManagerOptions {
@@ -26,4 +27,11 @@ export type GiveawayEvents = {
     giveawayEnded: (giveaway: GiveawayData, winners: string[]) => void;
     giveawayRerolled: (giveaway: GiveawayData, winners: string[]) => void;
     giveawayEdited: (giveaway: GiveawayData, updated: GiveawayData) => void;
+}
+
+export interface GiveawayRequirements {
+    requiredRoles?: string[];
+    accountAgeMin?: number;
+    joinedServerBefore?: number;
+    custom?: (userId: string) => Promise<boolean>;
 }
