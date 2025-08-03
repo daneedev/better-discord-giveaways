@@ -1,7 +1,8 @@
-import { Client, EmbedBuilder, TextChannel } from "discord.js"
+import { Client, EmbedBuilder, MessageReaction, TextChannel, User } from "discord.js"
 import { GiveawayData, GiveawayManagerOptions, GiveawayOptions } from "./types";
 import { BaseAdapter } from "./storage/BaseAdapter";
 import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
+import { checkRequirements } from "./RequirementCheck";
 
 class GiveawayManager  {
     private client: Client;
@@ -21,6 +22,35 @@ class GiveawayManager  {
         this.restoreTimeouts()
     }
     
+    private buildEmbed(options: GiveawayOptions, giveaway: GiveawayData) : EmbedBuilder {
+        const lines : string[] = [
+            `React with ${this.reaction} to enter!`,
+            `Ends <t:${Math.floor(giveaway.endAt / 1000)}:R>`
+        ]
+
+        if (options.requirements) {
+            const req = options.requirements
+            lines.push(`\n**Requirements:**`)
+
+            if (req.requiredRoles?.length) {
+                lines.push(`• Must have role(s): <@&${req.requiredRoles.join(">, <@&")}>`)
+            }
+
+            if (req.accountAgeMin) {
+                const days = Math.ceil(req.accountAgeMin / (1000 * 60 * 60 * 24))
+                lines.push(`• Account must be at least ${days} day(s) old`)
+            }
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle(`🎉 Giveaway - ${options.prize}`)
+            .setDescription(lines.join("\n"))
+            .setColor("Red")
+
+        return embed;
+    }
+
+
     public async start(options: GiveawayOptions) : Promise<GiveawayData> {
         const endAt = Date.now() + options.duration
         const giveaway: GiveawayData = {
@@ -30,7 +60,8 @@ class GiveawayManager  {
             winnerCount: options.winnerCount,
             endAt,
             messageId: null,
-            ended: false
+            ended: false,
+            requirements: options.requirements
         }
 
         const channel = await this.client.channels.fetch(options.channelId)
@@ -38,10 +69,7 @@ class GiveawayManager  {
             throw new Error("Channel not found or not text-based")
         }
 
-        const embed = new EmbedBuilder()
-            .setTitle(`🎉 Giveaway - ${options.prize}`)
-            .setDescription(`React with ${this.reaction} to enter!\nEnds <t:${Math.floor(endAt / 1000)}:R>`)
-            .setColor("Red")
+        const embed = this.buildEmbed(options, giveaway)
 
         const message = await (channel as TextChannel).send({ embeds: [embed]})
         await message.react(this.reaction)
@@ -51,6 +79,34 @@ class GiveawayManager  {
 
         this.setTimeoutForGiveaway(giveaway)
         this.events.emit("giveawayStarted", giveaway);
+
+        const collectorFilter = (r: MessageReaction, user: User) => {
+            return r.emoji.name === this.reaction && user.id !== message.author.id
+        }
+        const collector = message.createReactionCollector({filter: collectorFilter})
+
+        collector.on("collect", async (reaction, user) => {
+            const member = await message.guild.members.cache.get(user.id)
+            const { passed, reason } = await checkRequirements(user, member!, giveaway.requirements)
+            if (!passed) {
+                try {
+                    await reaction.users.remove(user)
+                } catch {}
+
+                const errEmbed = new EmbedBuilder()
+                    .setTitle("Can't join giveaway")
+                    .setDescription(reason!)
+                    .setColor("Red")
+                
+                const dm = await user.createDM().catch(() => null)
+                if (dm && reason) {
+                    dm.send({ embeds: [errEmbed]})
+                }
+
+                return
+            }
+        })
+
         return giveaway;
     }
 
@@ -101,10 +157,8 @@ class GiveawayManager  {
 
 
         const message = await (channel as TextChannel).messages.fetch(giveaway.messageId!)
-        const embed = new EmbedBuilder()
-            .setTitle(`🎉 Giveaway - ${options.prize}`)
-            .setDescription(`React with ${this.reaction} to enter!\nEnds <t:${Math.floor(giveaway.endAt / 1000)}:R>`)
-            .setColor("Red")
+
+        const embed = this.buildEmbed(options, giveaway)
 
         await message.edit({ embeds: [embed]})
 
@@ -115,7 +169,8 @@ class GiveawayManager  {
             prize: options.prize,
             winnerCount: options.winnerCount,
             endAt: giveaway.endAt,
-            ended: false
+            ended: false,
+            requirements: options.requirements
         })
         this.events.emit("giveawayEdited", giveaway, {
             giveawayId: giveaway.giveawayId,
@@ -124,7 +179,8 @@ class GiveawayManager  {
             prize: options.prize,
             winnerCount: options.winnerCount,
             endAt: giveaway.endAt,
-            ended: false
+            ended: false,
+            requirements: options.requirements
         })
     }
 

@@ -7,6 +7,7 @@ export interface GiveawayData {
     winnerCount: number;
     endAt: number;
     ended: boolean;
+    requirements?: GiveawayRequirements;
 }
 
 export interface GiveawayOptions {
@@ -31,7 +32,7 @@ export type GiveawayEvents = {
 
 export interface GiveawayRequirements {
     requiredRoles?: string[];
-    accountAgeMin?: number;
-    joinedServerBefore?: number;
-    custom?: (userId: string) => Promise<boolean>;
+    accountAgeMin?: number; // UNIX Timestamp
+    joinedServerBefore?: number; // UNIX Timestamp
+    custom?: (userId: string) => Promise<{passed: boolean, reason: string}>;
 }

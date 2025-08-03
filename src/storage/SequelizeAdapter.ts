@@ -18,7 +18,8 @@ export class SequelizeAdapter implements BaseAdapter {
             prize: data.prize,
             winnerCount: data.winnerCount,
             endAt: data.endAt,
-            ended: data.ended
+            ended: data.ended,
+            requirements: data.requirements
         })
     }
 

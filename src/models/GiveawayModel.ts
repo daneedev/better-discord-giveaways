@@ -1,5 +1,5 @@
 import { Sequelize, DataTypes, Model } from "sequelize"
-import { GiveawayData } from "../types"
+import { GiveawayData, GiveawayRequirements } from "../types"
 
 export class GiveawayModel extends Model implements GiveawayData {
     declare giveawayId: string;
@@ -9,6 +9,7 @@ export class GiveawayModel extends Model implements GiveawayData {
     declare winnerCount: number;
     declare endAt: number;
     declare ended: boolean;
+    declare requirements?: GiveawayRequirements | undefined;
 }
 
 export function initGiveawayModel(sequelize: Sequelize) {
@@ -41,6 +42,10 @@ export function initGiveawayModel(sequelize: Sequelize) {
         ended: {
             type: DataTypes.BOOLEAN,
             allowNull: false
+        },
+        requirements: {
+            type: DataTypes.JSONB,
+            allowNull: true
         }
     }, {
         sequelize,
