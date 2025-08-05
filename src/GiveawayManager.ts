@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, MessageFlags, MessageReaction, TextChannel, User } from "discord.js"
+import { Client, EmbedBuilder, Message, MessageFlags, MessageReaction, TextChannel, User } from "discord.js"
 import { GiveawayData, GiveawayManagerOptions, GiveawayOptions } from "./types";
 import { BaseAdapter } from "./storage/BaseAdapter";
 import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
@@ -80,35 +80,7 @@ class GiveawayManager  {
         this.setTimeoutForGiveaway(giveaway)
         this.events.emit("giveawayStarted", giveaway);
 
-        const collectorFilter = (r: MessageReaction, user: User) => {
-            return r.emoji.name === this.reaction && user.id !== message.author.id
-        }
-        const collector = message.createReactionCollector({filter: collectorFilter})
-
-        collector.on("collect", async (reaction, user) => {
-            const member = await message.guild.members.cache.get(user.id)
-            const { passed, reason } = await checkRequirements(user, member!, giveaway.requirements)
-            if (!passed) {
-                try {
-                    await reaction.users.remove(user)
-                } catch {}
-
-                const errEmbed = new EmbedBuilder()
-                    .setTitle(`${user.username} can't join giveaway`)
-                    .setDescription(reason!)
-                    .setColor("Red")
-                
-               if (reason) {
-                 const errMsg = await (reaction.message.channel as TextChannel).send({embeds: [errEmbed]})
-
-                 setTimeout(() => {
-                    errMsg.delete().catch(() => {})
-                 }, 5000)
-               }
-
-                return
-            }
-        })
+        this.setReactionCollector(giveaway)
 
         return giveaway;
     }
@@ -192,6 +164,7 @@ class GiveawayManager  {
         for (const giveaway of giveaways) {
             if (!giveaway.ended) {
                 this.setTimeoutForGiveaway(giveaway)
+                this.setReactionCollector(giveaway)
             }
         }
     }
@@ -231,6 +204,41 @@ class GiveawayManager  {
             clearTimeout(timeout)
             this.timeouts.delete(giveawayId)
         }
+    }
+
+    private async setReactionCollector(giveaway: GiveawayData) {
+        const channel = await this.client.channels.fetch(giveaway.channelId)
+        const message = await (channel as TextChannel).messages.fetch(giveaway.messageId!)
+
+        const collectorFilter = (r: MessageReaction, user: User) => {
+            return r.emoji.name === this.reaction && user.id !== message.author.id
+        }
+        const collector = message.createReactionCollector({filter: collectorFilter})
+
+        collector.on("collect", async (reaction, user) => {
+            const member = await message.guild.members.cache.get(user.id)
+            const { passed, reason } = await checkRequirements(user, member!, giveaway.requirements)
+            if (!passed) {
+                try {
+                    await reaction.users.remove(user)
+                } catch {}
+
+                const errEmbed = new EmbedBuilder()
+                    .setTitle(`${user.username} can't join giveaway`)
+                    .setDescription(reason!)
+                    .setColor("Red")
+                
+               if (reason) {
+                 const errMsg = await (reaction.message.channel as TextChannel).send({embeds: [errEmbed]})
+
+                 setTimeout(() => {
+                    errMsg.delete().catch(() => {})
+                 }, 5000)
+               }
+
+                return
+            }
+        })
     }
 }
 
