@@ -16,8 +16,7 @@ export async function checkRequirements(user: User, member: GuildMember, require
         }
 
         if (requirements.accountAgeMin) {
-            const age = Date.now() - user.createdTimestamp
-            if (age < requirements.accountAgeMin) {
+            if (user.createdTimestamp < requirements.accountAgeMin) {
                 const days = Math.ceil(requirements.accountAgeMin / (1000 * 60 * 60 * 24));
                 return {
                     passed: false,
@@ -26,11 +25,11 @@ export async function checkRequirements(user: User, member: GuildMember, require
             }
         }
 
-        if (requirements.joinedServerBefore) {
+        if (requirements.joinedServerMin) {
             const joined = member.joinedTimestamp ?? 0
-            if (joined > requirements.joinedServerBefore) return {
+            if (joined < requirements.joinedServerMin) return {
                 passed: false,
-                reason: `You have to be member of the server for ${ms(requirements.joinedServerBefore, {long: true})}`
+                reason: `You have to be member of the server for ${ms(requirements.joinedServerMin, {long: true})}`
             };
         }
 

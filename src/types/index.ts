@@ -32,7 +32,7 @@ export type GiveawayEvents = {
 
 export interface GiveawayRequirements {
     requiredRoles?: string[];
-    accountAgeMin?: number; // UNIX Timestamp
-    joinedServerBefore?: number; // UNIX Timestamp
+    accountAgeMin?: number; // UNIX Timestamp (Minimal user created timestamp)
+    joinedServerMin?: number; // UNIX Timestamp (Minimal user joined timestamp)
     custom?: (userId: string) => Promise<{passed: boolean, reason: string}>;
 }
