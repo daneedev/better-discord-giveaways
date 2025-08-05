@@ -222,6 +222,7 @@ class GiveawayManager  {
         const collector = message.createReactionCollector({filter: collectorFilter})
 
         collector.on("collect", async (reaction, user) => {
+            this.events.emit("reactionAdded", giveaway, reaction, user)
             const member = await message.guild.members.cache.get(user.id)
             const { passed, reason } = await checkRequirements(user, member!, giveaway.requirements)
             if (!passed) {
@@ -235,7 +236,8 @@ class GiveawayManager  {
                     .setColor("Red")
                 
                if (reason) {
-                 const errMsg = await (reaction.message.channel as TextChannel).send({embeds: [errEmbed]})
+                const errMsg = await (reaction.message.channel as TextChannel).send({embeds: [errEmbed]})
+                this.events.emit("requirementsFailed", giveaway, user, reason)
 
                  setTimeout(() => {
                     errMsg.delete().catch(() => {})
@@ -243,6 +245,8 @@ class GiveawayManager  {
                }
 
                 return
+            } else {
+                this.events.emit("requirementsPassed", giveaway, user)
             }
         })
     }

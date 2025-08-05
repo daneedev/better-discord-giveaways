@@ -1,3 +1,4 @@
+import { MessageReaction, User } from "discord.js";
 
 export interface GiveawayData {
     giveawayId: string;
@@ -28,6 +29,9 @@ export type GiveawayEvents = {
     giveawayEnded: (giveaway: GiveawayData, winners: string[]) => void;
     giveawayRerolled: (giveaway: GiveawayData, winners: string[]) => void;
     giveawayEdited: (giveaway: GiveawayData, updated: GiveawayData) => void;
+    reactionAdded: (giveaway: GiveawayData, reaction: MessageReaction, user: User) => void;
+    requirementsFailed: (giveaway: GiveawayData, user: User, reason: string) => void;
+    requirementsPassed: (giveaway: GiveawayData, user: User) => void;
 }
 
 export interface GiveawayRequirements {
