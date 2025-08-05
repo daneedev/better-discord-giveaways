@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, MessageReaction, TextChannel, User } from "discord.js"
+import { Client, EmbedBuilder, MessageFlags, MessageReaction, TextChannel, User } from "discord.js"
 import { GiveawayData, GiveawayManagerOptions, GiveawayOptions } from "./types";
 import { BaseAdapter } from "./storage/BaseAdapter";
 import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
@@ -94,14 +94,17 @@ class GiveawayManager  {
                 } catch {}
 
                 const errEmbed = new EmbedBuilder()
-                    .setTitle("Can't join giveaway")
+                    .setTitle(`${user.username} can't join giveaway`)
                     .setDescription(reason!)
                     .setColor("Red")
                 
-                const dm = await user.createDM().catch(() => null)
-                if (dm && reason) {
-                    dm.send({ embeds: [errEmbed]})
-                }
+               if (reason) {
+                 const errMsg = await (reaction.message.channel as TextChannel).send({embeds: [errEmbed]})
+
+                 setTimeout(() => {
+                    errMsg.delete().catch(() => {})
+                 }, 5000)
+               }
 
                 return
             }
