@@ -37,8 +37,11 @@ class GiveawayManager  {
             }
 
             if (req.accountAgeMin) {
-                const days = Math.ceil(req.accountAgeMin / (1000 * 60 * 60 * 24))
-                lines.push(`• Account must be at least ${days} day(s) old`)
+                lines.push(`• Account must be created at least <t:${Math.floor(req.accountAgeMin / 1000)}:R>`)
+            }
+
+            if (req.joinedServerBefore) {
+                lines.push(`• User must joined this server before <t:${Math.floor(req.joinedServerBefore / 1000)}:D>`)
             }
         }
 
@@ -208,6 +211,9 @@ class GiveawayManager  {
 
     private async setReactionCollector(giveaway: GiveawayData) {
         const channel = await this.client.channels.fetch(giveaway.channelId)
+        if (!channel || !channel.isTextBased()) {
+            throw new Error("Channel not found or not text-based")
+        }
         const message = await (channel as TextChannel).messages.fetch(giveaway.messageId!)
 
         const collectorFilter = (r: MessageReaction, user: User) => {

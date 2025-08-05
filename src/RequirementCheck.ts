@@ -1,6 +1,5 @@
 import { GuildMember, User } from "discord.js";
 import { GiveawayRequirements } from "./types";
-import ms from "ms"
 
 export async function checkRequirements(user: User, member: GuildMember, requirements?: GiveawayRequirements) : Promise<{passed: boolean, reason?: string}> {
         if (!requirements) return {passed: true};
@@ -16,20 +15,20 @@ export async function checkRequirements(user: User, member: GuildMember, require
         }
 
         if (requirements.accountAgeMin) {
-            if (user.createdTimestamp < requirements.accountAgeMin) {
-                const days = Math.ceil(requirements.accountAgeMin / (1000 * 60 * 60 * 24));
+            if (user.createdTimestamp > requirements.accountAgeMin) {
                 return {
                     passed: false,
-                    reason: `Your account must be at least ${days} day(s) old to enter`
+                    reason: `Your account must be created at least <t:${Math.floor(requirements.accountAgeMin / 1000)}:R>`
                 }
             }
         }
 
-        if (requirements.joinedServerMin) {
-            const joined = member.joinedTimestamp ?? 0
-            if (joined < requirements.joinedServerMin) return {
+        if (requirements.joinedServerBefore) {
+            console.log(`User: ${member.joinedTimestamp}`)
+            console.log(`Requirement: ${requirements.joinedServerBefore}`)
+            if (member.joinedTimestamp === null || member.joinedTimestamp > requirements.joinedServerBefore) return {
                 passed: false,
-                reason: `You have to be member of the server for ${ms(requirements.joinedServerMin, {long: true})}`
+                reason: `You have to be member before <t:${Math.floor(requirements.joinedServerBefore / 1000)}:D>`
             };
         }
 
