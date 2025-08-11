@@ -10,6 +10,7 @@ class GiveawayManager  {
     private botsCanWin: boolean;
     private adapter: BaseAdapter;
     private timeouts: Map<string, NodeJS.Timeout> = new Map()
+    private collectors: Map<string, any> = new Map() // Store collectors for cleanup
     public readonly events: GiveawayEventEmitter
     
     constructor(client: Client, adapter: BaseAdapter, options: GiveawayManagerOptions) {
@@ -207,6 +208,13 @@ class GiveawayManager  {
             clearTimeout(timeout)
             this.timeouts.delete(giveawayId)
         }
+        
+        // Also cleanup collector
+        const collector = this.collectors.get(giveawayId)
+        if (collector) {
+            collector.stop()
+            this.collectors.delete(giveawayId)
+        }
     }
 
     private async setReactionCollector(giveaway: GiveawayData) {
@@ -220,6 +228,7 @@ class GiveawayManager  {
             return r.emoji.name === this.reaction && user.id !== message.author.id
         }
         const collector = message.createReactionCollector({filter: collectorFilter})
+        this.collectors.set(giveaway.giveawayId, collector) // Store for cleanup
 
         collector.on("collect", async (reaction, user) => {
             this.events.emit("reactionAdded", giveaway, reaction, user)
