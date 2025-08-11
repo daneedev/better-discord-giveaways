@@ -1,5 +1,6 @@
 import { GuildMember, User } from "discord.js";
 import { GiveawayRequirements } from "./@types";
+import { t } from "./i18n";
 
 export async function checkRequirements(
   user: User,
@@ -15,7 +16,7 @@ export async function checkRequirements(
     if (!hasRoles)
       return {
         passed: false,
-        reason: `You must have one of the required roles: ${requirements.requiredRoles
+        reason: `${t("you_role")}: ${requirements.requiredRoles
           .map((id) => `<@&${id}>`)
           .join(", ")}`,
       };
@@ -25,7 +26,7 @@ export async function checkRequirements(
     if (user.createdTimestamp > requirements.accountAgeMin) {
       return {
         passed: false,
-        reason: `Your account must be created at least <t:${Math.floor(
+        reason: `${t("you_account")} <t:${Math.floor(
           requirements.accountAgeMin / 1000
         )}:R>`,
       };
@@ -39,7 +40,7 @@ export async function checkRequirements(
     )
       return {
         passed: false,
-        reason: `You have to be member before <t:${Math.floor(
+        reason: `${t("you_member")} <t:${Math.floor(
           requirements.joinedServerBefore / 1000
         )}:D>`,
       };

@@ -15,7 +15,7 @@ import {
 import { BaseAdapter } from "./storage/BaseAdapter";
 import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
 import { checkRequirements } from "./RequirementCheck";
-import { t } from "./i18n";
+import { i18n, t } from "./i18n";
 
 class GiveawayManager {
   private client: Client;
@@ -36,6 +36,8 @@ class GiveawayManager {
     this.reaction = options.reaction;
     this.botsCanWin = options.botsCanWin;
     this.events = new GiveawayEventEmitter();
+
+    i18n.changeLanguage(options.language || "en");
 
     this.restoreTimeouts();
   }

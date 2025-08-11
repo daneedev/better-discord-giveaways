@@ -1,0 +1,18 @@
+{
+    "react_with": "React with",
+    "to_enter": "to enter!",
+    "ends": "Ends",
+    "requirements": "Requirements",
+    "must_role": "Must have role(s)",
+    "must_account": "Account must be created at least",
+    "must_join": "User must joined this server before",
+    "giveaway": "Giveaway",
+    "no_winners": "No winners",
+    "giveaway_ended": "Giveaway ended",
+    "winners": "Winner(s)",
+    "ended": "Ended",
+    "cant_join": "Can't join giveaway",
+    "you_role": "You must have one of the required roles",
+    "you_account": "Your account must be created at least",
+    "you_member": "You have to be member before"
+}
