@@ -1,5 +1,5 @@
 {
-  "name": "better-discord-giveaways",
+  "name": "better-giveaways",
   "version": "1.0.0",
   "description": "A modern, feature-rich Discord giveaway manager with TypeScript support, flexible storage adapters, and comprehensive event system",
   "main": "dist/index.js",
@@ -24,14 +24,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/daneedev/better-discord-giveaways.git"
+    "url": "git+https://github.com/daneedev/better-giveaways.git"
   },
   "author": "Danee",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/daneedev/better-discord-giveaways/issues"
+    "url": "https://github.com/daneedev/better-giveaways/issues"
   },
-  "homepage": "https://github.com/daneedev/better-discord-giveaways#readme",
+  "homepage": "https://github.com/daneedev/better-giveaways#readme",
   "devDependencies": {
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
