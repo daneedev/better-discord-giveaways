@@ -24,8 +24,6 @@ export async function checkRequirements(user: User, member: GuildMember, require
         }
 
         if (requirements.joinedServerBefore) {
-            console.log(`User: ${member.joinedTimestamp}`)
-            console.log(`Requirement: ${requirements.joinedServerBefore}`)
             if (member.joinedTimestamp === null || member.joinedTimestamp > requirements.joinedServerBefore) return {
                 passed: false,
                 reason: `You have to be member before <t:${Math.floor(requirements.joinedServerBefore / 1000)}:D>`
