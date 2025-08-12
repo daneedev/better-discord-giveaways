@@ -1,6 +1,6 @@
 {
   "name": "better-giveaways",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "A modern, feature-rich Discord giveaway manager with TypeScript support, flexible storage adapters, and comprehensive event system",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "test": "ts-node-dev src/examples/index.ts",
-    "dev": "ts-node-dev src/index.ts"
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc"
   },
   "keywords": [
     "discord",
