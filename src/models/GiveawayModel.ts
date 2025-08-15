@@ -57,5 +57,7 @@ export function initGiveawayModel(sequelize: Sequelize) {
     }
   );
 
+  GiveawayModel.sync();
+
   return GiveawayModel;
 }
