@@ -34,7 +34,7 @@
   "bugs": {
     "url": "https://github.com/daneedev/better-giveaways/issues"
   },
-  "homepage": "https://github.com/daneedev/better-giveaways#readme",
+  "homepage": "https://daneedev.github.io/better-giveaways/",
   "devDependencies": {
     "ts-node-dev": "^2.0.0",
     "typedoc": "^0.28.10",
