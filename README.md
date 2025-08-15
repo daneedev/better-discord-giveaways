@@ -1,4 +1,4 @@
-# better-discord-giveaways
+# better-giveaways
 
 [![npm version](https://badge.fury.io/js/better-giveaways.svg)](https://badge.fury.io/js/better-giveaways)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -24,6 +24,10 @@ npm install better-giveaways@latest
 # Unstable version with beta features (dev)
 npm install better-giveaways@dev
 ```
+
+## 🤖 Example bot
+
+[Beepo's source code](https://github.com/daneedev/Beepo/blob/main/src/commands/giveaway/giveaway.ts)
 
 ## 🚀 Quick Start
 
