@@ -12,7 +12,9 @@
   "scripts": {
     "test": "ts-node-dev src/examples/index.ts",
     "dev": "ts-node-dev src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "docs": "typedoc --options typedoc.json",
+    "docs:serve": "typedoc --options typedoc.json --watch --serve"
   },
   "keywords": [
     "discord",
@@ -35,6 +37,7 @@
   "homepage": "https://github.com/daneedev/better-giveaways#readme",
   "devDependencies": {
     "ts-node-dev": "^2.0.0",
+    "typedoc": "^0.28.10",
     "typescript": "^5.8.3"
   },
   "dependencies": {

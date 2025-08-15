@@ -1,0 +1,28 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "Better Giveaways",
+  "theme": "default",
+  "includeVersion": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "categorizeByGroup": false,
+  "sort": ["source-order"],
+  "kindSortOrder": [
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Variable",
+    "Function",
+    "Method",
+    "Property",
+    "Constructor"
+  ],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "readme": "README.md",
+  "gitRevision": "main"
+}

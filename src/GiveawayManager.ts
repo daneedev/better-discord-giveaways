@@ -17,6 +17,25 @@ import { GiveawayEventEmitter } from "./GiveawayEventEmitter";
 import { checkRequirements } from "./RequirementCheck";
 import { i18n, t } from "./i18n";
 
+/**
+ * GiveawayManager represents a comprehensive manager for creating and managing Discord giveaways.
+ *
+ *
+ * @example
+ * ```typescript
+ * import { Client } from 'discord.js';
+ * import { GiveawayManager, JSONAdapter } from 'better-giveaways';
+ *
+ * const client = new Client({ intents: ['Guilds', 'GuildMessages', 'GuildMessageReactions'] });
+ * const adapter = new JSONAdapter('./giveaways.json');
+ *
+ * const giveawayManager = new GiveawayManager(client, adapter, {
+ *   reaction: '🎉',
+ *   botsCanWin: false,
+ *   language: 'en'
+ * });
+ * ```
+ */
 class GiveawayManager {
   private client: Client;
   private reaction: string;
@@ -24,8 +43,58 @@ class GiveawayManager {
   private adapter: BaseAdapter;
   private timeouts: Map<string, NodeJS.Timeout> = new Map();
   private collectors: Map<string, any> = new Map(); // Store collectors for cleanup
+
+  /**
+   * Event emitter for giveaway-related events.
+   *
+   * This property provides access to all giveaway events that you can listen to for custom handling.
+   *
+   * Available events:
+   * - `giveawayStarted`: Emitted when a new giveaway is started
+   * - `giveawayEnded`: Emitted when a giveaway naturally ends
+   * - `giveawayRerolled`: Emitted when a giveaway is rerolled
+   * - `giveawayEdited`: Emitted when a giveaway is edited
+   * - `reactionAdded`: Emitted when someone reacts to a giveaway
+   * - `requirementsFailed`: Emitted when a user fails entry requirements
+   * - `requirementsPassed`: Emitted when a user passes entry requirements
+   *
+   * @example
+   * ```typescript
+   * // Listen for giveaway events
+   * giveawayManager.events.on('giveawayStarted', (giveaway) => {
+   *   console.log(`Giveaway started: ${giveaway.prize}`);
+   * });
+   *
+   * giveawayManager.events.on('giveawayEnded', (giveaway, winners) => {
+   *   console.log(`Giveaway ended! Winners: ${winners.join(', ')}`);
+   * });
+   *
+   * giveawayManager.events.on('requirementsFailed', (giveaway, user, reason) => {
+   *   console.log(`${user.username} failed requirements: ${reason}`);
+   * });
+   * ```
+   */
   public readonly events: GiveawayEventEmitter;
 
+  /**
+   * Creates a new GiveawayManager instance.
+   *
+   * @param client - The Discord.js client instance that will be used for bot operations
+   * @param adapter - The storage adapter for persisting giveaway data (JSONAdapter, SequelizeAdapter, etc.)
+   * @param options - Configuration options for the giveaway manager
+   * @param options.reaction - The emoji reaction users will use to enter giveaways (e.g., '🎉')
+   * @param options.botsCanWin - Whether bot accounts are allowed to win giveaways
+   * @param options.language - The language for giveaway messages ('en' or 'cs'), defaults to 'en'
+   *
+   * @example
+   * ```typescript
+   * const giveawayManager = new GiveawayManager(client, adapter, {
+   *   reaction: '🎉',
+   *   botsCanWin: false,
+   *   language: 'en'
+   * });
+   * ```
+   */
   constructor(
     client: Client,
     adapter: BaseAdapter,
@@ -84,6 +153,37 @@ class GiveawayManager {
     return embed;
   }
 
+  /**
+   * Starts a new giveaway with the specified options.
+   *
+   * This method creates a new giveaway, sends an embed message to the specified channel,
+   * adds the reaction emoji, sets up automatic ending, and begins collecting reactions.
+   *
+   * @param options - The configuration for the giveaway
+   * @param options.channelId - The Discord channel ID where the giveaway will be posted
+   * @param options.prize - The prize description for the giveaway
+   * @param options.winnerCount - The number of winners to select
+   * @param options.duration - The duration of the giveaway in milliseconds
+   * @param options.requirements - Optional entry requirements for participants
+   *
+   * @returns A Promise that resolves to the created GiveawayData object
+   *
+   * @throws {Error} When the channel is not found or is not text-based
+   *
+   * @example
+   * ```typescript
+   * const giveaway = await giveawayManager.start({
+   *   channelId: '123456789',
+   *   prize: 'Discord Nitro',
+   *   winnerCount: 2,
+   *   duration: 24 * 60 * 60 * 1000, // 24 hours
+   *   requirements: {
+   *     requiredRoles: ['987654321'],
+   *     accountAgeMin: Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days old
+   *   }
+   * });
+   * ```
+   */
   public async start(options: GiveawayOptions): Promise<GiveawayData> {
     const endAt = Date.now() + options.duration;
     const giveaway: GiveawayData = {
@@ -118,6 +218,27 @@ class GiveawayManager {
     return giveaway;
   }
 
+  /**
+   * Ends a giveaway and selects winners.
+   *
+   * This method retrieves all reactions from the giveaway message, filters out bots (if configured),
+   * selects random winners, updates the embed to show the results, and emits appropriate events.
+   *
+   * @param giveawayId - The unique identifier of the giveaway to end
+   * @param rerolled - Whether this is a reroll operation (affects which event is emitted)
+   *
+   * @returns A Promise that resolves when the giveaway has been ended
+   *
+   * @example
+   * ```typescript
+   * // End a giveaway normally
+   * await giveawayManager.end('abc123def');
+   *
+   * // The method is also called automatically when the giveaway duration expires
+   * ```
+   *
+   * @internal This method is called automatically when giveaways expire, but can also be called manually
+   */
   public async end(giveawayId: string, rerolled: boolean): Promise<void> {
     const giveaway = await this.adapter.get(giveawayId);
     if (!giveaway || giveaway.ended) return;
@@ -164,6 +285,39 @@ class GiveawayManager {
     await this.adapter.save(giveaway);
   }
 
+  /**
+   * Edits an existing giveaway's details.
+   *
+   * This method allows you to modify the prize, winner count, and requirements of an active giveaway.
+   * The giveaway message embed will be updated to reflect the changes, and the updated data will be
+   * saved to storage.
+   *
+   * @param giveawayId - The unique identifier of the giveaway to edit
+   * @param options - The new giveaway options (prize, winnerCount, requirements)
+   * @param options.channelId - Must match the original channel ID (cannot be changed)
+   * @param options.prize - The new prize description
+   * @param options.winnerCount - The new number of winners
+   * @param options.duration - Not used in editing (original end time is preserved)
+   * @param options.requirements - The new entry requirements
+   *
+   * @returns A Promise that resolves when the giveaway has been updated
+   *
+   * @throws {Error} When the giveaway is not found or has already ended
+   *
+   * @example
+   * ```typescript
+   * // Edit a giveaway to change the prize and add requirements
+   * await giveawayManager.edit('abc123def', {
+   *   channelId: '123456789', // Must match original
+   *   prize: 'Discord Nitro + $50 Gift Card', // Updated prize
+   *   winnerCount: 3, // Increased winner count
+   *   duration: 0, // Not used in editing
+   *   requirements: {
+   *     requiredRoles: ['987654321', '876543210'] // Added requirements
+   *   }
+   * });
+   * ```
+   */
   public async edit(
     giveawayId: string,
     options: GiveawayOptions
@@ -206,6 +360,23 @@ class GiveawayManager {
     });
   }
 
+  /**
+   * Restores timeouts and reaction collectors for all active giveaways.
+   *
+   * This method is essential for maintaining giveaway functionality after bot restarts.
+   * It retrieves all active giveaways from storage and re-establishes their timeouts
+   * and reaction collectors. This method is automatically called during construction.
+   *
+   * @returns A Promise that resolves when all timeouts have been restored
+   *
+   * @example
+   * ```typescript
+   * // Usually called automatically, but can be called manually if needed
+   * await giveawayManager.restoreTimeouts();
+   * ```
+   *
+   * @internal This method is called automatically during manager initialization
+   */
   public async restoreTimeouts() {
     const giveaways = await this.adapter.getAll();
     for (const giveaway of giveaways) {
@@ -216,6 +387,28 @@ class GiveawayManager {
     }
   }
 
+  /**
+   * Rerolls the winners of an active giveaway.
+   *
+   * This method allows you to select new winners for a giveaway without ending it permanently.
+   * It performs the same winner selection process as the end method but emits a 'giveawayRerolled'
+   * event instead of 'giveawayEnded'.
+   *
+   * @param giveawayId - The unique identifier of the giveaway to reroll
+   *
+   * @returns A Promise that resolves when the reroll has been completed
+   *
+   * @example
+   * ```typescript
+   * // Reroll winners for a giveaway
+   * await giveawayManager.reroll('abc123def');
+   *
+   * // Listen for the reroll event
+   * giveawayManager.events.on('giveawayRerolled', (giveaway, newWinners) => {
+   *   console.log(`New winners selected: ${newWinners.join(', ')}`);
+   * });
+   * ```
+   */
   public async reroll(giveawayId: string): Promise<void> {
     const giveaway = await this.adapter.get(giveawayId);
     if (!giveaway || giveaway.ended) return;
